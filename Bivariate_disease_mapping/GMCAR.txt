@@ -1,0 +1,41 @@
+
+    model
+    {
+    Q1[1:k, 1:k] <- tau1*(D - rho1*Minc)
+    Q2[1:k, 1:k] <- tau2*(D - rho2*Minc)
+    
+    W1[1:k] ~ dmnorm(rep(0, k), Q1)
+    W2[1:k] ~ dmnorm(rep(0, k), Q2)
+    
+    
+    A21 <- eta021 * I + eta121 * Minc
+    
+    W[1:k] <- W1
+    W[(k+1):(2*k)] <- A21 %*% W1 + W2
+    
+    for (i in 1:k)
+    {
+    mu[i] <- X[i,] %*% beta + W[i]
+    Y[i] ~ dnorm(mu[i], taue1)
+    }
+    for (i in (k+1):(2*k))
+    {
+    mu[i] <- X[i,] %*% beta + W[i]
+    Y[i] ~ dnorm(mu[i], taue2)
+    }
+    
+    rho1 ~ dunif(0, 0.999)
+    rho2 ~ dunif(0, 0.999)
+    tau1 ~ dgamma(2, 0.1)
+    tau2 ~ dgamma(2, 0.1)
+    eta021 ~ dnorm(0, 0.01)
+    eta121 ~ dnorm(0, 0.01)
+    
+    taue1 ~ dgamma(2, 1)
+    taue2 ~ dgamma(2, 1)
+    vare1 <- 1/taue1
+    vare2 <- 1/taue2
+    
+    beta[1:nc] ~ dmnorm(rep(0,nc), (0.001*I1))
+    }
+    

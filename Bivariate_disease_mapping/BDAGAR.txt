@@ -1,0 +1,81 @@
+
+    model
+    {
+    for(i in 1:2){
+    Tau1[i, i] <- 1
+    Tau2[i, i] <- 1
+  
+    for(j in 1:k){
+    B1[i,j] <- 0
+    B2[i,j] <- 0
+    }
+    }
+    
+    for(l in 1:(k-1)){
+    for(h in (l+1):k){
+    Tau1[l,h] <- 0
+    Tau2[l,h] <- 0
+    }
+    }
+    
+    Tau1[2,1] <- 0
+    Tau2[2,1] <- 0
+    
+    for (i in 3:k)
+    {
+    Tau1[i,i] <- (1 + (ns[i-1] - 1) * rho1^2) / (1 - rho1^2)
+    Tau2[i,i] <- (1 + (ns[i-1] - 1) * rho2^2) / (1 - rho2^2)
+    for(h in 1:(i-1)){
+    Tau1[i,h] <- 0
+    Tau2[i,h] <- 0
+    }
+    b1[i] <- rho1 / (1 + (ns[i-1] - 1) * rho1^2)
+    b2[i] <- rho2 / (1 + (ns[i-1] - 1) * rho2^2)
+    #neighbor regions for region i with coef b
+    for(j in (udnei[(cn[i-1] + 1):(cn[i-1] + ns[i-1])])){
+    B1[i,j] <- b1[i]
+    B2[i,j] <- b2[i]
+    }
+    #regions which are not neighbors for region i with b = 0
+    for(j in index1[(k*(i-3)-cn[i-1]+1) : (k*(i-3)-cn[i-1] + (k - ns[i-1]))]){
+    B1[i,j] <- 0
+    B2[i,j] <- 0
+    }
+    }
+    
+    Q1 <- t(I - B1) %*% Tau1 %*% (I - B1)
+    Q2 <- t(I - B2) %*% Tau2 %*% (I - B2)
+    
+    W1[1:k] ~ dmnorm(rep(0, k), tau1*Q1)
+    W2[1:k] ~ dmnorm(rep(0, k), tau2*Q2)
+    
+    A21 <- eta021 * I + eta121 * Minc
+    
+    W[1:k] <- W1
+    W[(k+1):(2*k)] <- A21 %*% W1 + W2
+    
+    for (i in 1:k)
+    {
+    mu[i] <- X[i,] %*% beta + W[i]
+    Y[i] ~ dnorm(mu[i], taue1)
+    }
+    
+    for (i in (k+1):(2*k))
+    {
+    mu[i] <- X[i,] %*% beta + W[i]
+    Y[i] ~ dnorm(mu[i], taue2)
+    }
+    
+    rho1 ~ dunif(0, 0.999)
+    rho2 ~ dunif(0, 0.999)
+    tau1 ~ dgamma(2, 0.1)
+    tau2 ~ dgamma(2, 0.1)
+    eta021 ~ dnorm(0, 0.01)
+    eta121 ~ dnorm(0, 0.01)
+    taue1 ~ dgamma(2, 1)
+    taue2 ~ dgamma(2, 1)
+    vare1 <- 1/taue1
+    vare2 <- 1/taue2
+    beta[1:nc] ~ dmnorm(rep(0,nc), (0.001*I1))
+    }
+    

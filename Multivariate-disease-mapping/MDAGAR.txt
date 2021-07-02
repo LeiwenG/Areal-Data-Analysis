@@ -1,0 +1,139 @@
+
+      model
+      {
+      for(i in 1:2){
+      Tau1[i, i] <- 1
+      Tau2[i, i] <- 1
+      Tau3[i, i] <- 1
+      Tau4[i, i] <- 1
+      
+      for(j in 1:k){
+      B1[i,j] <- 0
+      B2[i,j] <- 0
+      B3[i,j] <- 0
+      B4[i,j] <- 0
+      }
+      }
+      
+      for(l in 1:(k-1)){
+      for(h in (l+1):k){
+      Tau1[l,h] <- 0
+      Tau2[l,h] <- 0
+      Tau3[l,h] <- 0
+      Tau4[l,h] <- 0
+      }
+      }
+      
+      Tau1[2,1] <- 0
+      Tau2[2,1] <- 0
+      Tau3[2,1] <- 0
+      Tau4[2,1] <- 0
+      
+      for (i in 3:k)
+      {
+      Tau1[i,i] <- (1 + (ns[i-1] - 1) * rho1^2) / (1 - rho1^2)
+      Tau2[i,i] <- (1 + (ns[i-1] - 1) * rho2^2) / (1 - rho2^2)
+      Tau3[i,i] <- (1 + (ns[i-1] - 1) * rho3^2) / (1 - rho3^2)
+      Tau4[i,i] <- (1 + (ns[i-1] - 1) * rho4^2) / (1 - rho4^2)
+      for(h in 1:(i-1)){
+      Tau1[i,h] <- 0
+      Tau2[i,h] <- 0
+      Tau3[i,h] <- 0
+      Tau4[i,h] <- 0
+      }
+      b1[i] <- rho1 / (1 + (ns[i-1] - 1) * rho1^2)
+      b2[i] <- rho2 / (1 + (ns[i-1] - 1) * rho2^2)
+      b3[i] <- rho3 / (1 + (ns[i-1] - 1) * rho3^2)
+      b4[i] <- rho4 / (1 + (ns[i-1] - 1) * rho4^2)
+      for(j in (udnei[(cn[i-1] + 1):(cn[i-1] + ns[i-1])])){
+      B1[i,j] <- b1[i]
+      B2[i,j] <- b2[i]
+      B3[i,j] <- b3[i]
+      B4[i,j] <- b4[i]
+      }
+      for(j in index1[((k)*(i-3)-cn[i-1]+1) : ((k)*(i-3)-cn[i-1] + (k - ns[i-1]))]){
+      B1[i,j] <- 0
+      B2[i,j] <- 0
+      B3[i,j] <- 0
+      B4[i,j] <- 0
+      }
+      }
+      
+      Q1 <- t(I - B1) %*% Tau1 %*% (I - B1)
+      Q2 <- t(I - B2) %*% Tau2 %*% (I - B2)
+      Q3 <- t(I - B3) %*% Tau3 %*% (I - B3)
+      Q4 <- t(I - B4) %*% Tau4 %*% (I - B4)
+      
+      W1[1:k] ~ dmnorm(rep(0, k), tau1*Q1)
+      W2[1:k] ~ dmnorm(rep(0, k), tau2*Q2)
+      W3[1:k] ~ dmnorm(rep(0, k), tau3*Q3)
+      W4[1:k] ~ dmnorm(rep(0, k), tau4*Q4)
+      A21 <- eta021 * I + eta121 * Minc
+      A31 <- eta031 * I + eta131 * Minc
+      A32 <- eta032 * I + eta132 * Minc
+      A41 <- eta041 * I + eta141 * Minc
+      A42 <- eta042 * I + eta142 * Minc
+      A43 <- eta043 * I + eta143 * Minc
+      W[1:k] <- W1
+      W[(k+1):(2*k)] <- A21 %*% W1 + W2
+      W[(2*k+1):(3*k)] <- A31 %*% W1 + A32 %*% W[(k+1):(2*k)] + W3
+      W[(3*k+1):(4*k)] <- A41 %*% W1 + A42 %*% W[(k+1):(2*k)] + A43 %*% W[(2*k+1):(3*k)] + W4
+      for (i in 1:k)
+      {
+      mu[i] <- X[i,] %*% beta + W[i]
+      Y[i] ~ dnorm(mu[i], taue1)
+      loglik[i] <- logdensity.norm(Y[i], mu[i], taue1)
+      }
+      
+      for (i in (k+1):(2*k))
+      {
+      mu[i] <- X[i,] %*% beta + W[i]
+      Y[i] ~ dnorm(mu[i], taue2)
+      loglik[i] <- logdensity.norm(Y[i], mu[i], taue2)
+      }
+      
+      for (i in (2*k+1):(3*k))
+      {
+      mu[i] <- X[i,] %*% beta + W[i]
+      Y[i] ~ dnorm(mu[i], taue3)
+      loglik[i] <- logdensity.norm(Y[i], mu[i], taue3)
+      }
+      for (i in (3*k+1):(4*k))
+      {
+      mu[i] <- X[i,] %*% beta + W[i]
+      Y[i] ~ dnorm(mu[i], taue4)
+      loglik[i] <- logdensity.norm(Y[i], mu[i], taue4)
+      }
+      
+      rho1 ~ dunif(0, 0.999)
+      rho2 ~ dunif(0, 0.999)
+      rho3 ~ dunif(0, 0.999)
+      rho4 ~ dunif(0, 0.999)
+      tau1 ~ dgamma(2, 0.1)
+      tau2 ~ dgamma(2, 0.1)
+      tau3 ~ dgamma(2, 0.1)
+      tau4 ~ dgamma(2, 0.1)
+      eta021 ~ dnorm(0, 0.01)
+      eta121 ~ dnorm(0, 0.01)
+      eta031 ~ dnorm(0, 0.01)
+      eta131 ~ dnorm(0, 0.01)
+      eta032 ~ dnorm(0, 0.01)
+      eta132 ~ dnorm(0, 0.01)
+      eta041 ~ dnorm(0, 0.01)
+      eta141 ~ dnorm(0, 0.01)
+      eta042 ~ dnorm(0, 0.01)
+      eta142 ~ dnorm(0, 0.01)
+      eta043 ~ dnorm(0, 0.01)
+      eta143 ~ dnorm(0, 0.01)
+      
+      taue1 ~ dgamma(2, 1)
+      taue2 ~ dgamma(2, 1)
+      taue3 ~ dgamma(2, 1)
+      taue4 ~ dgamma(2, 1)
+      vare1 <- 1/taue1
+      vare2 <- 1/taue2
+      vare3 <- 1/taue3
+      vare4 <- 1/taue4
+      beta[1:nc] ~ dmnorm(rep(0,nc), (0.001*I1))
+      }
+      
