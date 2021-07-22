@@ -14,7 +14,7 @@ This repository contains three projects for areal data analysis. Each folder is 
 
 R markdown files present the implementation of real data analysis in following papers:
 
-Gao, L., Banerjee, S., and Datta, A. (2020), ``Spatial Modeling for Correlated Cancers
+Gao, L., Banerjee, S., and Datta, A. (2020), ''Spatial Modeling for Correlated Cancers
 Using Bivariate Directed Graphs,'' Annals of Cancer Epidemiology, 4.
 
 Gao, L., Datta, A., and Banerjee, S. (2021), ''Hierarchical Multivariate Directed Acyclic
